@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import healthRoutes from "./routes/health.routes";
 import authRoutes from "./routes/auth.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import applicationRoutes from "./routes/application.routes";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/applications", applicationRoutes);
 
 app.listen(PORT, () => {
   console.log(`CareerPilot server running on http://localhost:${PORT}`);
