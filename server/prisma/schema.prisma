@@ -46,14 +46,30 @@ model Application {
 }
 
 model Resume {
-  id            String   @id @default(uuid())
+  id            String           @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   fileName      String
   storedName    String
   fileSize      Int
   extractedText String?
-  isDefault     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isDefault     Boolean          @default(false)
+  analyses      ResumeAnalysis[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model ResumeAnalysis {
+  id              String   @id @default(uuid())
+  resumeId        String
+  resume          Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  overallScore    Int
+  skillsScore     Int
+  experienceScore Int
+  projectsScore   Int
+  keywordsScore   Int
+  atsScore        Int
+  strengths       String[]
+  improvements    String[]
+  createdAt       DateTime @default(now())
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
+import { AnalysisModal } from "../components/AnalysisModal";
 import * as resumeService from "../services/resumeService";
 import type { Resume } from "../types/resume.types";
 
@@ -14,6 +15,7 @@ export function Resumes() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [analyzingResume, setAnalyzingResume] = useState<Resume | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function loadResumes() {
@@ -107,26 +109,49 @@ export function Resumes() {
         {!isLoading && resumes.length > 0 && (
           <ul className="space-y-2">
             {resumes.map((resume) => (
-              <li key={resume.id} className="flex justify-between items-center bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
+              <li
+                key={resume.id}
+                className="flex justify-between items-center bg-slate-800 border border-slate-700 rounded-lg px-4 py-3"
+              >
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{resume.fileName}</p>
-                    {resume.isDefault && <span className="text-xs bg-blue-600 px-2 py-0.5 rounded-full">Default</span>}
+                    {resume.isDefault && (
+                      <span className="text-xs bg-blue-600 px-2 py-0.5 rounded-full">Default</span>
+                    )}
                   </div>
                   <p className="text-sm text-slate-400">
-                    {formatFileSize(resume.fileSize)} • Uploaded {new Date(resume.createdAt).toLocaleDateString()}
+                    {formatFileSize(resume.fileSize)} • Uploaded{" "}
+                    {new Date(resume.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   {!resume.isDefault && (
-                    <button onClick={() => handleSetDefault(resume)} className="text-sm text-slate-400 hover:text-white">
+                    <button
+                      onClick={() => handleSetDefault(resume)}
+                      className="text-sm text-slate-400 hover:text-white"
+                    >
                       Set as default
                     </button>
                   )}
-                  <a href={resumeService.getDownloadUrl(resume.id)} target="_blank" rel="noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
+                  <button
+                    onClick={() => setAnalyzingResume(resume)}
+                    className="text-sm text-purple-400 hover:text-purple-300"
+                  >
+                    Analyze
+                  </button>
+                  <a
+                    href={resumeService.getDownloadUrl(resume.id)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-blue-400 hover:text-blue-300"
+                  >
                     Download
                   </a>
-                  <button onClick={() => handleDelete(resume)} className="text-sm text-red-400 hover:text-red-300">
+                  <button
+                    onClick={() => handleDelete(resume)}
+                    className="text-sm text-red-400 hover:text-red-300"
+                  >
                     Delete
                   </button>
                 </div>
@@ -135,6 +160,14 @@ export function Resumes() {
           </ul>
         )}
       </div>
+
+      {analyzingResume && (
+        <AnalysisModal
+          resumeId={analyzingResume.id}
+          resumeName={analyzingResume.fileName}
+          onClose={() => setAnalyzingResume(null)}
+        />
+      )}
     </div>
   );
 }
