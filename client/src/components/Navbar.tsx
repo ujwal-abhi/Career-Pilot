@@ -23,6 +23,9 @@ export function Navbar() {
         <Link to="/resumes" className={linkClass("/resumes")}>
           Resumes
         </Link>
+        <Link to="/job-match" className={linkClass("/job-match")}>
+          Job Match
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-slate-400">{user?.name}</span>

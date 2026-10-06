@@ -1,4 +1,4 @@
-import type { AIProvider, ResumeAnalysisResult } from "./types";
+import type { AIProvider, ResumeAnalysisResult, JobMatchResult } from "./types";
 
 const SKILL_KEYWORDS = [
   "javascript", "typescript", "react", "node", "express", "python", "java",
@@ -75,6 +75,63 @@ export class MockAIProvider implements AIProvider {
       atsScore,
       strengths,
       improvements,
+    };
+  }
+
+  async matchResumeToJob(resumeText: string, jobDescription: string): Promise<JobMatchResult> {
+    const jobSkills = SKILL_KEYWORDS.filter((skill) =>
+      jobDescription.toLowerCase().includes(skill)
+    );
+    const resumeSkills = SKILL_KEYWORDS.filter((skill) =>
+      resumeText.toLowerCase().includes(skill)
+    );
+
+    const matchedSkills = jobSkills.filter((skill) => resumeSkills.includes(skill));
+    const missingSkills = jobSkills.filter((skill) => !resumeSkills.includes(skill));
+
+    const matchScore =
+      jobSkills.length > 0
+        ? Math.round((matchedSkills.length / jobSkills.length) * 100)
+        : 50; // the job description didn't mention any skill we recognize — can't meaningfully score overlap
+
+    const relevantExperience: string[] = [];
+    const potentialGaps: string[] = [];
+    const recommendations: string[] = [];
+
+    if (matchedSkills.length > 0) {
+      relevantExperience.push(
+        `Your resume shows experience with ${matchedSkills.slice(0, 5).join(", ")}, which this role asks for.`
+      );
+    } else {
+      relevantExperience.push(
+        "No direct skill keyword overlap was detected between your resume and this job description."
+      );
+    }
+
+    if (missingSkills.length > 0) {
+      potentialGaps.push(
+        `This role mentions ${missingSkills.join(", ")}, which weren't found in your resume.`
+      );
+      recommendations.push(
+        `Consider adding or highlighting experience with: ${missingSkills.join(", ")}.`
+      );
+    } else if (jobSkills.length > 0) {
+      recommendations.push("Your resume already covers every specific skill this job description mentions.");
+    }
+
+    if (matchScore < 50) {
+      recommendations.push(
+        "This may be a stretch role based on keyword overlap alone — use your own judgment alongside this score."
+      );
+    }
+
+    return {
+      matchScore,
+      matchedSkills,
+      missingSkills,
+      relevantExperience,
+      potentialGaps,
+      recommendations,
     };
   }
 }

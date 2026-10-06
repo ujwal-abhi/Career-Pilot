@@ -6,6 +6,7 @@ import { Register } from "./pages/Register";
 import { Dashboard } from "./pages/Dashboard";
 import { Applications } from "./pages/Applications";
 import { Resumes } from "./pages/Resumes";
+import { JobMatchPage } from "./pages/JobMatch";
 
 function App() {
   return (
@@ -34,6 +35,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Resumes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/job-match"
+          element={
+            <ProtectedRoute>
+              <JobMatchPage />
             </ProtectedRoute>
           }
         />

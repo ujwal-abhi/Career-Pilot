@@ -1,4 +1,4 @@
-import type { ResumeAnalysisResult } from "./providers/types";
+import type { ResumeAnalysisResult, JobMatchResult } from "./providers/types";
 
 function clampScore(value: unknown): number {
   const num = typeof value === "number" ? value : Number(value);
@@ -21,5 +21,16 @@ export function validateAnalysisResult(raw: Partial<ResumeAnalysisResult>): Resu
     atsScore: clampScore(raw.atsScore),
     strengths: toStringArray(raw.strengths),
     improvements: toStringArray(raw.improvements),
+  };
+}
+
+export function validateJobMatchResult(raw: Partial<JobMatchResult>): JobMatchResult {
+  return {
+    matchScore: clampScore(raw.matchScore),
+    matchedSkills: toStringArray(raw.matchedSkills),
+    missingSkills: toStringArray(raw.missingSkills),
+    relevantExperience: toStringArray(raw.relevantExperience),
+    potentialGaps: toStringArray(raw.potentialGaps),
+    recommendations: toStringArray(raw.recommendations),
   };
 }

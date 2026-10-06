@@ -1,13 +1,18 @@
 import { MockAIProvider } from "./providers/mock.provider";
-import { validateAnalysisResult } from "./validateAnalysis";
-import type { AIProvider, ResumeAnalysisResult } from "./providers/types";
+import { validateAnalysisResult, validateJobMatchResult } from "./validateAnalysis";
+import type { AIProvider, ResumeAnalysisResult, JobMatchResult } from "./providers/types";
 
-// Provider selection lives in exactly one place. Swapping to a real LLM later
-// means adding a new class that implements AIProvider and changing this one line —
-// nothing else in the app needs to know or care which provider is active.
 const provider: AIProvider = new MockAIProvider();
 
 export async function analyzeResumeText(resumeText: string): Promise<ResumeAnalysisResult> {
   const rawResult = await provider.analyzeResume(resumeText);
   return validateAnalysisResult(rawResult);
+}
+
+export async function matchResumeToJobText(
+  resumeText: string,
+  jobDescription: string
+): Promise<JobMatchResult> {
+  const rawResult = await provider.matchResumeToJob(resumeText, jobDescription);
+  return validateJobMatchResult(rawResult);
 }
