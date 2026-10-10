@@ -1,10 +1,10 @@
-import type { AIProvider, ResumeAnalysisResult, JobMatchResult } from "./types";
-
-const SKILL_KEYWORDS = [
-  "javascript", "typescript", "react", "node", "express", "python", "java",
-  "sql", "postgresql", "mongodb", "aws", "docker", "kubernetes", "git",
-  "html", "css", "tailwind", "next.js", "rest api", "graphql", "ci/cd",
-];
+import type {
+  AIProvider,
+  ResumeAnalysisResult,
+  JobMatchResult,
+  TailoringResult,
+} from "./types";
+import { containsTerm, findSkills } from "../skills";
 
 const ACTION_VERBS = [
   "led", "built", "developed", "designed", "improved", "increased",
@@ -14,9 +14,12 @@ const ACTION_VERBS = [
 
 const SECTION_HEADERS = ["experience", "education", "skills", "projects", "summary"];
 
+// Matches a leading bullet marker (•, ●, ▪, ◦, ‣, ·, a PDF private-use bullet, -, –, —, *).
+// Written as \u escapes so the file survives copy/paste without encoding surprises.
+const BULLET_PREFIX = /^\s*[\u2022\u25CF\u25AA\u25E6\u2023\u00B7\uF0B7*\-\u2013\u2014]\s*/;
+
 function countMatches(text: string, terms: string[]): number {
-  const lower = text.toLowerCase();
-  return terms.filter((term) => lower.includes(term)).length;
+  return terms.filter((term) => containsTerm(text, term)).length;
 }
 
 function scaleScore(matchCount: number, maxExpected: number): number {
@@ -24,9 +27,42 @@ function scaleScore(matchCount: number, maxExpected: number): number {
   return Math.min(100, Math.max(40, raw)); // floor of 40 so a thin resume isn't a brutal 0
 }
 
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+// Pulls out lines that look like resume bullet points: either they start with a
+// bullet marker, or they start with an action verb. Lines are returned exactly as
+// written in the resume (minus the bullet marker) — never reworded.
+function extractBullets(resumeText: string): string[] {
+  const seen = new Set<string>();
+  const results: string[] = [];
+
+  for (const rawLine of resumeText.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const hasBulletMarker = BULLET_PREFIX.test(line);
+    const cleaned = line.replace(BULLET_PREFIX, "").trim();
+    const words = cleaned.split(/\s+/);
+    const firstWord = words[0]?.toLowerCase() ?? "";
+
+    if (words.length < 5 || words.length > 45) continue;
+    if (!hasBulletMarker && !ACTION_VERBS.includes(firstWord)) continue;
+    if (seen.has(cleaned)) continue;
+
+    seen.add(cleaned);
+    results.push(cleaned);
+  }
+
+  return results;
+}
+
 export class MockAIProvider implements AIProvider {
   async analyzeResume(resumeText: string): Promise<ResumeAnalysisResult> {
-    const skillMatches = countMatches(resumeText, SKILL_KEYWORDS);
+    const skillMatches = findSkills(resumeText).length;
     const keywordMatches = countMatches(resumeText, ACTION_VERBS);
     const sectionMatches = countMatches(resumeText, SECTION_HEADERS);
     const hasYearRange = /20\d{2}/.test(resumeText);
@@ -79,12 +115,8 @@ export class MockAIProvider implements AIProvider {
   }
 
   async matchResumeToJob(resumeText: string, jobDescription: string): Promise<JobMatchResult> {
-    const jobSkills = SKILL_KEYWORDS.filter((skill) =>
-      jobDescription.toLowerCase().includes(skill)
-    );
-    const resumeSkills = SKILL_KEYWORDS.filter((skill) =>
-      resumeText.toLowerCase().includes(skill)
-    );
+    const jobSkills = findSkills(jobDescription);
+    const resumeSkills = findSkills(resumeText);
 
     const matchedSkills = jobSkills.filter((skill) => resumeSkills.includes(skill));
     const missingSkills = jobSkills.filter((skill) => !resumeSkills.includes(skill));
@@ -133,5 +165,47 @@ export class MockAIProvider implements AIProvider {
       potentialGaps,
       recommendations,
     };
+  }
+
+  async tailorResume(
+    resumeText: string,
+    jobDescription: string,
+    targetPosition: string
+  ): Promise<TailoringResult> {
+    const jobSkills = findSkills(jobDescription);
+    const resumeSkills = findSkills(resumeText);
+
+    // Only skills present in BOTH the resume and the job description.
+    const skills = jobSkills.filter((skill) => resumeSkills.includes(skill));
+
+    const notes: string[] = [];
+
+    let summary = "";
+    if (skills.length > 0) {
+      summary = `Seeking a ${targetPosition} role, bringing skills in ${formatList(skills.slice(0, 5))}.`;
+    } else {
+      notes.push(
+        "No skills from this job description were found in your resume, so no summary or skills list could be built without inventing something."
+      );
+    }
+
+    // Existing resume lines, ranked by how many of the job's skills they mention.
+    const bullets = extractBullets(resumeText)
+      .map((text) => ({
+        text,
+        score: findSkills(text).filter((skill) => jobSkills.includes(skill)).length,
+      }))
+      .filter((bullet) => bullet.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((bullet) => bullet.text);
+
+    if (bullets.length === 0 && skills.length > 0) {
+      notes.push(
+        "None of your bullet points mention skills from this job description (or your PDF's bullet lines couldn't be detected — wrapped or unusually formatted lines can hide them)."
+      );
+    }
+
+    return { summary, skills, bullets, notes };
   }
 }

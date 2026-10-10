@@ -18,7 +18,19 @@ export interface JobMatchResult {
   recommendations: string[];
 }
 
+export interface TailoringResult {
+  summary: string;
+  skills: string[];
+  bullets: string[];
+  notes: string[];
+}
+
 export interface AIProvider {
   analyzeResume(resumeText: string): Promise<ResumeAnalysisResult>;
   matchResumeToJob(resumeText: string, jobDescription: string): Promise<JobMatchResult>;
+  tailorResume(
+    resumeText: string,
+    jobDescription: string,
+    targetPosition: string
+  ): Promise<TailoringResult>;
 }

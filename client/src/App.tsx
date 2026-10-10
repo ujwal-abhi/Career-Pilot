@@ -7,6 +7,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Applications } from "./pages/Applications";
 import { Resumes } from "./pages/Resumes";
 import { JobMatchPage } from "./pages/JobMatch";
+import { TailorPage } from "./pages/Tailor";
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute>
               <JobMatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tailor"
+          element={
+            <ProtectedRoute>
+              <TailorPage />
             </ProtectedRoute>
           }
         />

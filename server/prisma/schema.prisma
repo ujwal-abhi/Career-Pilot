@@ -42,6 +42,7 @@ model Application {
   applicationDate DateTime?
   notes           String?
   jobMatches      JobMatchAnalysis[]
+  tailorings      ResumeTailoring[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -57,6 +58,7 @@ model Resume {
   isDefault     Boolean            @default(false)
   analyses      ResumeAnalysis[]
   jobMatches    JobMatchAnalysis[]
+  tailorings    ResumeTailoring[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 }
@@ -89,4 +91,17 @@ model JobMatchAnalysis {
   potentialGaps      String[]
   recommendations    String[]
   createdAt          DateTime    @default(now())
+}
+
+model ResumeTailoring {
+  id            String      @id @default(uuid())
+  resumeId      String
+  resume        Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  summary       String
+  skills        String[]
+  bullets       String[]
+  notes         String[]
+  createdAt     DateTime    @default(now())
 }
