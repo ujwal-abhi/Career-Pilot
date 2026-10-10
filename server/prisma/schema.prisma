@@ -43,6 +43,7 @@ model Application {
   notes           String?
   jobMatches      JobMatchAnalysis[]
   tailorings      ResumeTailoring[]
+  interviewSets   InterviewSet[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }
@@ -59,6 +60,7 @@ model Resume {
   analyses      ResumeAnalysis[]
   jobMatches    JobMatchAnalysis[]
   tailorings    ResumeTailoring[]
+  interviewSets InterviewSet[]
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 }
@@ -104,4 +106,34 @@ model ResumeTailoring {
   bullets       String[]
   notes         String[]
   createdAt     DateTime    @default(now())
+}
+
+enum QuestionCategory {
+  HR
+  TECHNICAL
+  BEHAVIORAL
+  PROJECT
+  ROLE_SPECIFIC
+}
+
+model InterviewSet {
+  id            String              @id @default(uuid())
+  resumeId      String
+  resume        Resume              @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   Application         @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  notes         String[]
+  questions     InterviewQuestion[]
+  createdAt     DateTime            @default(now())
+}
+
+model InterviewQuestion {
+  id              String           @id @default(uuid())
+  interviewSetId  String
+  interviewSet    InterviewSet     @relation(fields: [interviewSetId], references: [id], onDelete: Cascade)
+  category        QuestionCategory
+  question        String
+  answerStructure String
+  sortOrder       Int
+  createdAt       DateTime         @default(now())
 }

@@ -8,6 +8,7 @@ import { Applications } from "./pages/Applications";
 import { Resumes } from "./pages/Resumes";
 import { JobMatchPage } from "./pages/JobMatch";
 import { TailorPage } from "./pages/Tailor";
+import { InterviewPrepPage } from "./pages/InterviewPrep";
 
 function App() {
   return (
@@ -52,6 +53,14 @@ function App() {
           element={
             <ProtectedRoute>
               <TailorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/interview-prep"
+          element={
+            <ProtectedRoute>
+              <InterviewPrepPage />
             </ProtectedRoute>
           }
         />

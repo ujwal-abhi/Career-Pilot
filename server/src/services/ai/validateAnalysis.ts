@@ -1,4 +1,11 @@
-import type { ResumeAnalysisResult, JobMatchResult, TailoringResult } from "./providers/types";
+import type {
+  ResumeAnalysisResult,
+  JobMatchResult,
+  TailoringResult,
+  InterviewQuestionsResult,
+  InterviewQuestionItem,
+  QuestionCategory,
+} from "./providers/types";
 import { containsTerm, findSkills } from "./skills";
 
 function clampScore(value: unknown): number {
@@ -76,4 +83,84 @@ export function validateTailoringResult(
   }
 
   return { summary, skills, bullets, notes };
+}
+
+// ---- Interview questions ----
+
+const VALID_CATEGORIES: QuestionCategory[] = [
+  "HR",
+  "TECHNICAL",
+  "BEHAVIORAL",
+  "PROJECT",
+  "ROLE_SPECIFIC",
+];
+const MAX_QUESTIONS = 25;
+const MAX_TEXT_LENGTH = 600;
+
+export function validateInterviewResult(
+  raw: Partial<InterviewQuestionsResult>,
+  resumeText: string,
+  jobDescription: string,
+  context: string // the position and company the user typed in
+): InterviewQuestionsResult {
+  const allowedText = `${resumeText}\n${jobDescription}\n${context}`;
+  const rawQuestions: unknown[] = Array.isArray(raw.questions) ? raw.questions : [];
+
+  const seen = new Set<string>();
+  const questions: InterviewQuestionItem[] = [];
+  let removed = 0;
+
+  for (const item of rawQuestions) {
+    if (typeof item !== "object" || item === null) {
+      removed += 1;
+      continue;
+    }
+
+    const candidate = item as Partial<InterviewQuestionItem>;
+    const category = candidate.category;
+    const question = typeof candidate.question === "string" ? candidate.question.trim() : "";
+    const answerStructure =
+      typeof candidate.answerStructure === "string" ? candidate.answerStructure.trim() : "";
+
+    if (category === undefined || !VALID_CATEGORIES.includes(category)) {
+      removed += 1;
+      continue;
+    }
+    if (
+      question.length === 0 ||
+      question.length > MAX_TEXT_LENGTH ||
+      answerStructure.length === 0 ||
+      answerStructure.length > MAX_TEXT_LENGTH
+    ) {
+      removed += 1;
+      continue;
+    }
+
+    // A PROJECT question presumes you did the work, so its skills must be in the RESUME.
+    // Other questions may also mention skills that only appear in the job description.
+    const sourceText = category === "PROJECT" ? resumeText : allowedText;
+    const isGroundedQuestion = findSkills(question).every((skill) =>
+      containsTerm(sourceText, skill)
+    );
+    if (!isGroundedQuestion) {
+      removed += 1;
+      continue;
+    }
+
+    const key = question.toLowerCase();
+    if (seen.has(key)) continue; // exact duplicates are dropped quietly
+    seen.add(key);
+
+    questions.push({ category, question, answerStructure });
+    if (questions.length >= MAX_QUESTIONS) break;
+  }
+
+  const notes = toStringArray(raw.notes);
+  if (removed > 0) {
+    notes.push(
+      `${removed} generated question(s) were removed because they were malformed or mentioned skills not found in your resume or the job description.`
+    );
+  }
+
+  return { questions, notes };
 }

@@ -25,6 +25,24 @@ export interface TailoringResult {
   notes: string[];
 }
 
+export type QuestionCategory =
+  | "HR"
+  | "TECHNICAL"
+  | "BEHAVIORAL"
+  | "PROJECT"
+  | "ROLE_SPECIFIC";
+
+export interface InterviewQuestionItem {
+  category: QuestionCategory;
+  question: string;
+  answerStructure: string;
+}
+
+export interface InterviewQuestionsResult {
+  questions: InterviewQuestionItem[];
+  notes: string[];
+}
+
 export interface AIProvider {
   analyzeResume(resumeText: string): Promise<ResumeAnalysisResult>;
   matchResumeToJob(resumeText: string, jobDescription: string): Promise<JobMatchResult>;
@@ -33,4 +51,10 @@ export interface AIProvider {
     jobDescription: string,
     targetPosition: string
   ): Promise<TailoringResult>;
+  generateInterviewQuestions(
+    resumeText: string,
+    jobDescription: string,
+    targetPosition: string,
+    company: string
+  ): Promise<InterviewQuestionsResult>;
 }
