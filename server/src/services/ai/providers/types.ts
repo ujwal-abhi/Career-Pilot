@@ -43,6 +43,22 @@ export interface InterviewQuestionsResult {
   notes: string[];
 }
 
+export interface AnswerFeedbackInput {
+  category: QuestionCategory;
+  question: string;
+  answer: string;
+  resumeText: string;
+}
+
+export interface AnswerFeedbackResult {
+  strengths: string[];
+  improvements: string[];
+  failedChecks: string[];
+  passedCount: number;
+  totalCount: number;
+  notes: string[];
+}
+
 export interface AIProvider {
   analyzeResume(resumeText: string): Promise<ResumeAnalysisResult>;
   matchResumeToJob(resumeText: string, jobDescription: string): Promise<JobMatchResult>;
@@ -57,4 +73,5 @@ export interface AIProvider {
     targetPosition: string,
     company: string
   ): Promise<InterviewQuestionsResult>;
+  evaluateAnswer(input: AnswerFeedbackInput): Promise<AnswerFeedbackResult>;
 }

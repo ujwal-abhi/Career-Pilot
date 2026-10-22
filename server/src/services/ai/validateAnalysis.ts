@@ -5,8 +5,10 @@ import type {
   InterviewQuestionsResult,
   InterviewQuestionItem,
   QuestionCategory,
+  AnswerFeedbackResult,
 } from "./providers/types";
 import { containsTerm, findSkills } from "./skills";
+import { CHECK_LABELS } from "./answerEvaluation";
 
 function clampScore(value: unknown): number {
   const num = typeof value === "number" ? value : Number(value);
@@ -163,4 +165,43 @@ export function validateInterviewResult(
   }
 
   return { questions, notes };
+}
+
+// ---- Practice feedback ----
+
+const MAX_FEEDBACK_ITEMS = 8;
+const MAX_FEEDBACK_ITEM_LENGTH = 500;
+const MAX_TOTAL_CHECKS = 20;
+
+function cleanFeedbackStrings(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0 && item.length <= MAX_FEEDBACK_ITEM_LENGTH)
+    .slice(0, MAX_FEEDBACK_ITEMS);
+}
+
+export function validateFeedbackResult(raw: Partial<AnswerFeedbackResult>): AnswerFeedbackResult {
+  // Only known check keys survive, so weak-area counting never sees junk.
+  const failedChecks = Array.from(
+    new Set(
+      (Array.isArray(raw.failedChecks) ? raw.failedChecks : []).filter(
+        (key): key is string => typeof key === "string" && key in CHECK_LABELS
+      )
+    )
+  );
+
+  const rawTotal = typeof raw.totalCount === "number" ? Math.round(raw.totalCount) : 0;
+  const totalCount = Math.min(MAX_TOTAL_CHECKS, Math.max(rawTotal, failedChecks.length, 1));
+
+  return {
+    strengths: cleanFeedbackStrings(raw.strengths),
+    improvements: cleanFeedbackStrings(raw.improvements),
+    failedChecks,
+    // Derived, never trusted from the provider, so the numbers always agree.
+    passedCount: totalCount - failedChecks.length,
+    totalCount,
+    notes: cleanFeedbackStrings(raw.notes),
+  };
 }

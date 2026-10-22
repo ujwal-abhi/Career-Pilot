@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  password     String
-  name         String
-  applications Application[]
-  resumes      Resume[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id               String            @id @default(uuid())
+  email            String            @unique
+  password         String
+  name             String
+  applications     Application[]
+  resumes          Resume[]
+  practiceAttempts PracticeAttempt[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 enum ApplicationStatus {
@@ -128,12 +129,30 @@ model InterviewSet {
 }
 
 model InterviewQuestion {
-  id              String           @id @default(uuid())
+  id              String            @id @default(uuid())
   interviewSetId  String
-  interviewSet    InterviewSet     @relation(fields: [interviewSetId], references: [id], onDelete: Cascade)
+  interviewSet    InterviewSet      @relation(fields: [interviewSetId], references: [id], onDelete: Cascade)
   category        QuestionCategory
   question        String
   answerStructure String
   sortOrder       Int
-  createdAt       DateTime         @default(now())
+  attempts        PracticeAttempt[]
+  createdAt       DateTime          @default(now())
+}
+
+model PracticeAttempt {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer       String
+  wordCount    Int
+  strengths    String[]
+  improvements String[]
+  notes        String[]
+  failedChecks String[]
+  passedCount  Int
+  totalCount   Int
+  createdAt    DateTime          @default(now())
 }

@@ -5,9 +5,12 @@ import type {
   TailoringResult,
   InterviewQuestionsResult,
   InterviewQuestionItem,
+  AnswerFeedbackInput,
+  AnswerFeedbackResult,
 } from "./types";
 import { containsTerm, findSkills, displayName } from "../skills";
 import { ACTION_VERBS, extractBullets, splitSentences } from "../text";
+import { evaluateAnswer as evaluateAnswerRules } from "../answerEvaluation";
 
 const SECTION_HEADERS = ["experience", "education", "skills", "projects", "summary"];
 
@@ -321,5 +324,9 @@ export class MockAIProvider implements AIProvider {
     }
 
     return { questions, notes };
+  }
+
+  async evaluateAnswer(input: AnswerFeedbackInput): Promise<AnswerFeedbackResult> {
+    return evaluateAnswerRules(input);
   }
 }

@@ -4,6 +4,7 @@ import {
   validateJobMatchResult,
   validateTailoringResult,
   validateInterviewResult,
+  validateFeedbackResult,
 } from "./validateAnalysis";
 import type {
   AIProvider,
@@ -11,6 +12,8 @@ import type {
   JobMatchResult,
   TailoringResult,
   InterviewQuestionsResult,
+  AnswerFeedbackInput,
+  AnswerFeedbackResult,
 } from "./providers/types";
 
 const provider: AIProvider = new MockAIProvider();
@@ -56,4 +59,11 @@ export async function generateInterviewQuestionsText(
     jobDescription,
     `${targetPosition} ${company}`
   );
+}
+
+export async function evaluateAnswerText(
+  input: AnswerFeedbackInput
+): Promise<AnswerFeedbackResult> {
+  const rawResult = await provider.evaluateAnswer(input);
+  return validateFeedbackResult(rawResult);
 }

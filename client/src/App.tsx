@@ -9,6 +9,7 @@ import { Resumes } from "./pages/Resumes";
 import { JobMatchPage } from "./pages/JobMatch";
 import { TailorPage } from "./pages/Tailor";
 import { InterviewPrepPage } from "./pages/InterviewPrep";
+import { PracticePage } from "./pages/Practice";
 
 function App() {
   return (
@@ -61,6 +62,14 @@ function App() {
           element={
             <ProtectedRoute>
               <InterviewPrepPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/practice"
+          element={
+            <ProtectedRoute>
+              <PracticePage />
             </ProtectedRoute>
           }
         />

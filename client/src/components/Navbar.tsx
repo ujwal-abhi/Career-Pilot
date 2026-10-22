@@ -32,6 +32,9 @@ export function Navbar() {
         <Link to="/interview-prep" className={linkClass("/interview-prep")}>
           Interview Prep
         </Link>
+        <Link to="/practice" className={linkClass("/practice")}>
+          Practice
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-slate-400">{user?.name}</span>
