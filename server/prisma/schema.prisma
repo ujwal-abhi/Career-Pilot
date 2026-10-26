@@ -30,12 +30,12 @@ enum ApplicationStatus {
 }
 
 model Application {
-  id              String             @id @default(uuid())
+  id              String                   @id @default(uuid())
   userId          String
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company         String
   position        String
-  status          ApplicationStatus  @default(SAVED)
+  status          ApplicationStatus        @default(SAVED)
   jobUrl          String?
   salary          String?
   location        String?
@@ -45,8 +45,24 @@ model Application {
   jobMatches      JobMatchAnalysis[]
   tailorings      ResumeTailoring[]
   interviewSets   InterviewSet[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  statusEvents    ApplicationStatusEvent[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([userId])
+}
+
+// One row per status change. "Current status" only says where an application is
+// NOW; this history says how far it ever got, which is what the funnel needs.
+model ApplicationStatusEvent {
+  id            String             @id @default(uuid())
+  applicationId String
+  application   Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus    ApplicationStatus?
+  toStatus      ApplicationStatus
+  createdAt     DateTime           @default(now())
+
+  @@index([applicationId])
 }
 
 model Resume {

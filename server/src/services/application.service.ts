@@ -36,6 +36,9 @@ export async function createApplication(userId: string, data: ApplicationInput) 
   return prisma.application.create({
     data: {
       userId,
+      // The first history row: "this application started here". Written in the same
+      // query as the application, so one can never exist without the other.
+      statusEvents: { create: { fromStatus: null, toStatus: data.status ?? "SAVED" } },
       company: data.company,
       position: data.position,
       status: data.status,
@@ -54,7 +57,14 @@ export async function updateApplication(
   id: string,
   data: Partial<ApplicationInput>
 ) {
-  await getApplicationById(userId, id); // throws NOT_FOUND if missing or not owned by this user
+  const existing = await getApplicationById(userId, id); // throws NOT_FOUND if missing or not owned by this user
+
+  // Only a real change is history. Re-saving the form with the same status adds nothing.
+  const newStatus = data.status;
+  const statusHistory =
+    newStatus !== undefined && newStatus !== existing.status
+      ? { statusEvents: { create: { fromStatus: existing.status, toStatus: newStatus } } }
+      : {};
 
   return prisma.application.update({
     where: { id },
@@ -62,6 +72,7 @@ export async function updateApplication(
       ...(data.company !== undefined && { company: data.company }),
       ...(data.position !== undefined && { position: data.position }),
       ...(data.status !== undefined && { status: data.status }),
+      ...statusHistory,
       ...(data.jobUrl !== undefined && { jobUrl: data.jobUrl || null }),
       ...(data.salary !== undefined && { salary: data.salary || null }),
       ...(data.location !== undefined && { location: data.location || null }),

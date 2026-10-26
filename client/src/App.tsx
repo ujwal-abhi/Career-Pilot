@@ -10,6 +10,7 @@ import { JobMatchPage } from "./pages/JobMatch";
 import { TailorPage } from "./pages/Tailor";
 import { InterviewPrepPage } from "./pages/InterviewPrep";
 import { PracticePage } from "./pages/Practice";
+import { AnalyticsPage } from "./pages/Analytics";
 
 function App() {
   return (
@@ -70,6 +71,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PracticePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <AnalyticsPage />
             </ProtectedRoute>
           }
         />

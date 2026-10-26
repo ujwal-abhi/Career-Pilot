@@ -11,8 +11,8 @@ export function Navbar() {
     }`;
 
   return (
-    <nav className="flex justify-between items-center px-8 py-4 border-b border-slate-800">
-      <div className="flex items-center gap-6">
+    <nav className="flex flex-wrap justify-between items-center gap-y-3 px-4 sm:px-8 py-4 border-b border-slate-800">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
         <span className="font-bold text-lg">CareerPilot</span>
         <Link to="/dashboard" className={linkClass("/dashboard")}>
           Dashboard
@@ -34,6 +34,9 @@ export function Navbar() {
         </Link>
         <Link to="/practice" className={linkClass("/practice")}>
           Practice
+        </Link>
+        <Link to="/analytics" className={linkClass("/analytics")}>
+          Analytics
         </Link>
       </div>
       <div className="flex items-center gap-4">

@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import applicationRoutes from "./routes/application.routes";
 import resumeRoutes from "./routes/resume.routes";
 import aiRoutes from "./routes/ai.routes";
+import analyticsRoutes from "./routes/analytics.routes"; // NEW
 import { ensureUploadDir } from "./services/storage.service";
 
 dotenv.config();
@@ -32,7 +33,11 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/analytics", analyticsRoutes); // NEW
 
+// Error-handling middleware: Express recognizes this as an error handler
+// specifically because it takes 4 arguments (err, req, res, next).
+// It must be registered AFTER all routes.
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
