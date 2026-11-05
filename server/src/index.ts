@@ -9,7 +9,10 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import applicationRoutes from "./routes/application.routes";
 import resumeRoutes from "./routes/resume.routes";
 import aiRoutes from "./routes/ai.routes";
-import analyticsRoutes from "./routes/analytics.routes"; // NEW
+import analyticsRoutes from "./routes/analytics.routes";
+import interviewRoutes from "./routes/interview.routes"; // NEW
+import reminderRoutes from "./routes/reminder.routes"; // NEW
+import notificationRoutes from "./routes/notification.routes"; // NEW
 import { ensureUploadDir } from "./services/storage.service";
 
 dotenv.config();
@@ -33,7 +36,10 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/analytics", analyticsRoutes); // NEW
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/interviews", interviewRoutes); // NEW
+app.use("/api/reminders", reminderRoutes); // NEW
+app.use("/api/notifications", notificationRoutes); // NEW
 
 // Error-handling middleware: Express recognizes this as an error handler
 // specifically because it takes 4 arguments (err, req, res, next).

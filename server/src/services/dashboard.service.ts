@@ -1,5 +1,6 @@
 import prisma from "../config/db";
 import type { ApplicationStatus } from "../generated/prisma/client";
+import { listUpcomingInterviews } from "./interview.service";
 
 const STATUSES: ApplicationStatus[] = [
   "SAVED",
@@ -15,7 +16,7 @@ export async function getDashboardStats(userId: string) {
   // The database does the counting (GROUP BY status) and the 5 newest rows are
   // fetched with LIMIT 5, so this stays fast no matter how many applications exist.
   // Before, every application was loaded into memory just to be counted.
-  const [grouped, recent] = await Promise.all([
+  const [grouped, recent, upcomingInterviews] = await Promise.all([
     prisma.application.groupBy({
       by: ["status"],
       where: { userId },
@@ -27,6 +28,7 @@ export async function getDashboardStats(userId: string) {
       take: 5,
       select: { id: true, company: true, position: true, status: true, createdAt: true },
     }),
+    listUpcomingInterviews(userId, 5),
   ]);
 
   // groupBy only returns statuses that exist, so start every status at 0.
@@ -44,5 +46,6 @@ export async function getDashboardStats(userId: string) {
     totalApplications,
     statusCounts,
     recentApplications: recent,
+    upcomingInterviews,
   };
 }

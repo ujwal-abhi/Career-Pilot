@@ -1,3 +1,4 @@
+import type { UpcomingInterview } from "./schedule.types";
 export type ApplicationStatus =
   | "SAVED"
   | "APPLIED"
@@ -56,4 +57,5 @@ export interface DashboardStats {
   totalApplications: number;
   statusCounts: Record<ApplicationStatus, number>;
   recentApplications: RecentApplication[];
+  upcomingInterviews: UpcomingInterview[];
 }

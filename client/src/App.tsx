@@ -11,6 +11,7 @@ import { TailorPage } from "./pages/Tailor";
 import { InterviewPrepPage } from "./pages/InterviewPrep";
 import { PracticePage } from "./pages/Practice";
 import { AnalyticsPage } from "./pages/Analytics";
+import { SchedulePage } from "./pages/Schedule";
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/schedule"
+          element={
+            <ProtectedRoute>
+              <SchedulePage />
             </ProtectedRoute>
           }
         />

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { getDashboardStats } from "../services/dashboardService";
 import { StatCard } from "../components/StatCard";
+import { Link } from "react-router-dom";
+import { formatDateTime, formatRelative } from "../utils/datetime";
 import type { DashboardStats } from "../types/application.types";
 
 export function Dashboard() {
@@ -48,6 +50,40 @@ export function Dashboard() {
                 accentClassName="text-red-400"
               />
             </div>
+
+            <h2 className="text-lg font-semibold mb-3">Upcoming Interviews</h2>
+            {stats.upcomingInterviews.length === 0 ? (
+              <div className="rounded-lg border border-slate-700 bg-slate-800 p-6 text-center mb-8">
+                <p className="text-slate-300 mb-1">No interviews scheduled.</p>
+                <p className="text-slate-500 text-sm">
+                  Book one on the{" "}
+                  <Link to="/schedule" className="text-blue-400 underline">
+                    Schedule
+                  </Link>{" "}
+                  page and it shows up here.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-700 rounded-lg border border-slate-700 overflow-hidden mb-8">
+                {stats.upcomingInterviews.map((interview) => (
+                  <li
+                    key={interview.id}
+                    className="flex justify-between items-center gap-4 bg-slate-800 px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-medium">{interview.title}</p>
+                      <p className="text-sm text-slate-400">
+                        {interview.application.company} - {interview.application.position}
+                      </p>
+                    </div>
+                    <div className="text-right text-sm shrink-0">
+                      <p className="text-slate-200">{formatDateTime(interview.scheduledAt)}</p>
+                      <p className="text-slate-500">{formatRelative(interview.scheduledAt)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <h2 className="text-lg font-semibold mb-3">Recent Applications</h2>
             {stats.recentApplications.length === 0 ? (

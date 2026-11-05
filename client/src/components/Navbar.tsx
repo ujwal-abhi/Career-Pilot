@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { NotificationBell } from "./NotificationBell";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -11,9 +12,9 @@ export function Navbar() {
     }`;
 
   return (
-    <nav className="flex flex-wrap justify-between items-center gap-y-3 px-4 sm:px-8 py-4 border-b border-slate-800">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6">
-        <span className="font-bold text-lg">CareerPilot</span>
+    <nav className="relative flex flex-wrap justify-between items-center gap-y-3 px-4 sm:px-8 py-4 border-b border-slate-800">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-1">
+        <span className="font-bold text-lg sm:mr-4">CareerPilot</span>
         <Link to="/dashboard" className={linkClass("/dashboard")}>
           Dashboard
         </Link>
@@ -38,8 +39,12 @@ export function Navbar() {
         <Link to="/analytics" className={linkClass("/analytics")}>
           Analytics
         </Link>
+        <Link to="/schedule" className={linkClass("/schedule")}>
+          Schedule
+        </Link>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-4">
+        <NotificationBell />
         <span className="text-sm text-slate-400">{user?.name}</span>
         <button onClick={() => logout()} className="rounded bg-slate-700 px-4 py-2 text-sm">
           Log out

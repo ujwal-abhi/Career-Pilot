@@ -15,6 +15,7 @@ model User {
   applications     Application[]
   resumes          Resume[]
   practiceAttempts PracticeAttempt[]
+  reminders        Reminder[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 }
@@ -30,24 +31,28 @@ enum ApplicationStatus {
 }
 
 model Application {
-  id              String                   @id @default(uuid())
-  userId          String
-  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company         String
-  position        String
-  status          ApplicationStatus        @default(SAVED)
-  jobUrl          String?
-  salary          String?
-  location        String?
-  jobDescription  String?
-  applicationDate DateTime?
-  notes           String?
-  jobMatches      JobMatchAnalysis[]
-  tailorings      ResumeTailoring[]
-  interviewSets   InterviewSet[]
-  statusEvents    ApplicationStatusEvent[]
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
+  id                   String                   @id @default(uuid())
+  userId               String
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company              String
+  position             String
+  status               ApplicationStatus        @default(SAVED)
+  jobUrl               String?
+  salary               String?
+  location             String?
+  jobDescription       String?
+  applicationDate      DateTime?
+  notes                String?
+  // Set by "Snooze" on a follow-up notification: hide the nudge until this time.
+  followUpSnoozedUntil DateTime?
+  jobMatches           JobMatchAnalysis[]
+  tailorings           ResumeTailoring[]
+  interviewSets        InterviewSet[]
+  statusEvents         ApplicationStatusEvent[]
+  interviews           Interview[]
+  reminders            Reminder[]
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
 
   @@index([userId])
 }
@@ -63,6 +68,46 @@ model ApplicationStatusEvent {
   createdAt     DateTime           @default(now())
 
   @@index([applicationId])
+}
+
+enum InterviewFormat {
+  PHONE
+  VIDEO
+  ONSITE
+}
+
+// A scheduled interview. Named Interview because Step 10 deliberately left that name free
+// (practice questions are InterviewSet / InterviewQuestion). scheduledAt is stored as a UTC
+// instant; the browser converts to and from the person's local time.
+model Interview {
+  id            String          @id @default(uuid())
+  applicationId String
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  title         String
+  format        InterviewFormat @default(VIDEO)
+  scheduledAt   DateTime
+  location      String?
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([applicationId, scheduledAt])
+}
+
+// A to-do with a due time. Optionally tied to an application; if that application is
+// deleted the reminder goes with it, since it would no longer make sense.
+model Reminder {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  title         String
+  dueAt         DateTime
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([userId, completedAt, dueAt])
 }
 
 model Resume {
