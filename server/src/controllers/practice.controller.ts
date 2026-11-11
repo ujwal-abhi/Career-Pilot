@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { submitAttempt, listAttempts, getWeakAreas } from "../services/practice.service";
+import { routeParam } from "../utils/params.util";
 
 export async function postPracticeAttempt(req: Request, res: Response) {
   const { questionId, answer } = req.body;
@@ -30,7 +31,7 @@ export async function postPracticeAttempt(req: Request, res: Response) {
 
 export async function getPracticeAttempts(req: Request, res: Response) {
   try {
-    const attempts = await listAttempts(req.userId!, req.params.questionId);
+    const attempts = await listAttempts(req.userId!, routeParam(req.params.questionId));
     return res.json({ success: true, data: { attempts } });
   } catch (error) {
     if (error instanceof Error && error.message === "QUESTION_NOT_FOUND") {

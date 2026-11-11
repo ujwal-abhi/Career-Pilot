@@ -1,13 +1,9 @@
 import { Request, Response } from "express";
 import { registerUser, loginUser, getUserById } from "../services/auth.service";
 import { validateRegisterInput, validateLoginInput } from "../validators/auth.validator";
+import { authCookieOptions, AUTH_COOKIE_NAME, AUTH_COOKIE_MAX_AGE_MS } from "../config/cookie";
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: false, // set to true in production (requires HTTPS)
-  sameSite: "lax" as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-};
+const COOKIE_WITH_LIFETIME = { ...authCookieOptions, maxAge: AUTH_COOKIE_MAX_AGE_MS };
 
 export async function register(req: Request, res: Response) {
   const validationError = validateRegisterInput(req.body);
@@ -17,7 +13,7 @@ export async function register(req: Request, res: Response) {
 
   try {
     const { token, user } = await registerUser(req.body);
-    res.cookie("token", token, COOKIE_OPTIONS);
+    res.cookie(AUTH_COOKIE_NAME, token, COOKIE_WITH_LIFETIME);
     return res.status(201).json({ success: true, data: { user } });
   } catch (error) {
     if (error instanceof Error && error.message === "EMAIL_IN_USE") {
@@ -39,7 +35,7 @@ export async function login(req: Request, res: Response) {
 
   try {
     const { token, user } = await loginUser(req.body);
-    res.cookie("token", token, COOKIE_OPTIONS);
+    res.cookie(AUTH_COOKIE_NAME, token, COOKIE_WITH_LIFETIME);
     return res.json({ success: true, data: { user } });
   } catch (error) {
     if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
@@ -51,7 +47,7 @@ export async function login(req: Request, res: Response) {
 }
 
 export function logout(req: Request, res: Response) {
-  res.clearCookie("token", COOKIE_OPTIONS);
+  res.clearCookie(AUTH_COOKIE_NAME, authCookieOptions);
   return res.json({ success: true, data: { message: "Logged out successfully." } });
 }
 

@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { runResumeAnalysis, getLatestAnalysis } from "../services/resumeAnalysis.service";
+import { routeParam } from "../utils/params.util";
 
 export async function postResumeAnalysis(req: Request, res: Response) {
   try {
-    const analysis = await runResumeAnalysis(req.userId!, req.params.resumeId);
+    const analysis = await runResumeAnalysis(req.userId!, routeParam(req.params.resumeId));
     return res.status(201).json({ success: true, data: { analysis } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
@@ -22,7 +23,7 @@ export async function postResumeAnalysis(req: Request, res: Response) {
 
 export async function getResumeAnalysis(req: Request, res: Response) {
   try {
-    const analysis = await getLatestAnalysis(req.userId!, req.params.resumeId);
+    const analysis = await getLatestAnalysis(req.userId!, routeParam(req.params.resumeId));
     return res.json({ success: true, data: { analysis } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {

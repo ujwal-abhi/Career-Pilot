@@ -7,6 +7,7 @@ import {
   deleteApplication,
 } from "../services/application.service";
 import { validateApplicationInput } from "../validators/application.validator";
+import { routeParam } from "../utils/params.util";
 
 export async function getApplications(req: Request, res: Response) {
   try {
@@ -20,7 +21,7 @@ export async function getApplications(req: Request, res: Response) {
 
 export async function getApplication(req: Request, res: Response) {
   try {
-    const application = await getApplicationById(req.userId!, req.params.id);
+    const application = await getApplicationById(req.userId!, routeParam(req.params.id));
     return res.json({ success: true, data: { application } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
@@ -51,7 +52,7 @@ export async function putApplication(req: Request, res: Response) {
     return res.status(400).json({ success: false, message: validationError });
   }
   try {
-    const application = await updateApplication(req.userId!, req.params.id, req.body);
+    const application = await updateApplication(req.userId!, routeParam(req.params.id), req.body);
     return res.json({ success: true, data: { application } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
@@ -64,7 +65,7 @@ export async function putApplication(req: Request, res: Response) {
 
 export async function removeApplication(req: Request, res: Response) {
   try {
-    await deleteApplication(req.userId!, req.params.id);
+    await deleteApplication(req.userId!, routeParam(req.params.id));
     return res.json({ success: true, data: { message: "Application deleted." } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {

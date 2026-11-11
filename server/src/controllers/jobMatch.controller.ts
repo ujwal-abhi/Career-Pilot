@@ -5,6 +5,7 @@ import {
   listResumesForMatch,
   listApplicationsForMatch,
 } from "../services/jobMatch.service";
+import { routeParam } from "../utils/params.util";
 
 export async function getMatchOptions(req: Request, res: Response) {
   try {
@@ -53,7 +54,8 @@ export async function postJobMatch(req: Request, res: Response) {
 }
 
 export async function getJobMatch(req: Request, res: Response) {
-  const { resumeId, applicationId } = req.params;
+  const resumeId = routeParam(req.params.resumeId);
+  const applicationId = routeParam(req.params.applicationId);
   try {
     const match = await getLatestJobMatch(req.userId!, resumeId, applicationId);
     return res.json({ success: true, data: { match } });

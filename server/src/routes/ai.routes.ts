@@ -9,10 +9,12 @@ import {
   getPracticeWeakAreas,
 } from "../controllers/practice.controller";
 import { requireAuth } from "../middleware/auth.middleware";
+import { aiLimiter } from "../middleware/rateLimit.middleware";
 
 const router = Router();
 
 router.use(requireAuth);
+router.use(aiLimiter); // after requireAuth, so the limit is counted per signed-in user
 
 router.post("/resume-analysis/:resumeId", postResumeAnalysis);
 router.get("/resume-analysis/:resumeId", getResumeAnalysis);

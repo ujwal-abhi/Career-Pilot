@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { runInterviewPrep, getLatestInterviewSet } from "../services/interviewPrep.service";
+import { routeParam } from "../utils/params.util";
 
 export async function postInterviewPrep(req: Request, res: Response) {
   const { resumeId, applicationId } = req.body;
@@ -35,7 +36,8 @@ export async function postInterviewPrep(req: Request, res: Response) {
 }
 
 export async function getInterviewPrep(req: Request, res: Response) {
-  const { resumeId, applicationId } = req.params;
+  const resumeId = routeParam(req.params.resumeId);
+  const applicationId = routeParam(req.params.applicationId);
   try {
     const interviewSet = await getLatestInterviewSet(req.userId!, resumeId, applicationId);
     return res.json({ success: true, data: { interviewSet } });

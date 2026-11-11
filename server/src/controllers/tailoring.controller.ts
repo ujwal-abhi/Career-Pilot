@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { runTailoring, getLatestTailoring } from "../services/tailoring.service";
+import { routeParam } from "../utils/params.util";
 
 export async function postTailoring(req: Request, res: Response) {
   const { resumeId, applicationId } = req.body;
@@ -35,7 +36,8 @@ export async function postTailoring(req: Request, res: Response) {
 }
 
 export async function getTailoring(req: Request, res: Response) {
-  const { resumeId, applicationId } = req.params;
+  const resumeId = routeParam(req.params.resumeId);
+  const applicationId = routeParam(req.params.applicationId);
   try {
     const tailoring = await getLatestTailoring(req.userId!, resumeId, applicationId);
     return res.json({ success: true, data: { tailoring } });

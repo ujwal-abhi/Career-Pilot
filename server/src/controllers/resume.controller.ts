@@ -7,6 +7,7 @@ import {
   setDefaultResume,
   getResumeFilePath,
 } from "../services/resume.service";
+import { routeParam } from "../utils/params.util";
 
 export async function getResumes(req: Request, res: Response) {
   try {
@@ -33,7 +34,7 @@ export async function postResume(req: Request, res: Response) {
 
 export async function downloadResume(req: Request, res: Response) {
   try {
-    const resume = await getResumeById(req.userId!, req.params.id);
+    const resume = await getResumeById(req.userId!, routeParam(req.params.id));
     const filePath = getResumeFilePath(resume.storedName);
     return res.download(filePath, resume.fileName);
   } catch (error) {
@@ -47,7 +48,7 @@ export async function downloadResume(req: Request, res: Response) {
 
 export async function removeResume(req: Request, res: Response) {
   try {
-    await deleteResume(req.userId!, req.params.id);
+    await deleteResume(req.userId!, routeParam(req.params.id));
     return res.json({ success: true, data: { message: "Resume deleted." } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
@@ -60,7 +61,7 @@ export async function removeResume(req: Request, res: Response) {
 
 export async function putDefaultResume(req: Request, res: Response) {
   try {
-    await setDefaultResume(req.userId!, req.params.id);
+    await setDefaultResume(req.userId!, routeParam(req.params.id));
     return res.json({ success: true, data: { message: "Default resume updated." } });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
