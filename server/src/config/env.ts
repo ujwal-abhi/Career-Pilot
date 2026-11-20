@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "path";
 
 // One place that reads process.env, checks it, and exposes typed values.
 //
@@ -18,6 +19,7 @@ export interface Env {
   clientOrigins: string[]; // exact origins the browser app is served from
   cookieSameSite: SameSite;
   trustProxy: number; // how many reverse proxies sit in front of the server
+  uploadDir: string; // absolute folder where uploaded resumes are stored
 }
 
 export interface EnvResult {
@@ -113,10 +115,15 @@ export function parseEnv(source: Record<string, string | undefined>): EnvResult 
     errors.push(`TRUST_PROXY must be a whole number between 0 and 10 (got "${rawTrustProxy}").`);
   }
 
+  // UPLOAD_DIR: where resume PDFs are stored. Defaults to server/uploads/resumes. Always made
+  // absolute, so it does not depend on which folder the server was started from.
+  const rawUploadDir = (source.UPLOAD_DIR ?? "").trim();
+  const uploadDir = rawUploadDir ? path.resolve(rawUploadDir) : path.resolve(__dirname, "../../uploads/resumes");
+
   if (errors.length > 0) return { env: null, errors, warnings };
 
   return {
-    env: { nodeEnv, isProduction, port, databaseUrl, jwtSecret, clientOrigins, cookieSameSite, trustProxy },
+    env: { nodeEnv, isProduction, port, databaseUrl, jwtSecret, clientOrigins, cookieSameSite, trustProxy, uploadDir },
     errors,
     warnings,
   };
