@@ -20,6 +20,8 @@ export interface Env {
   cookieSameSite: SameSite;
   trustProxy: number; // how many reverse proxies sit in front of the server
   uploadDir: string; // absolute folder where uploaded resumes are stored
+  serveClient: boolean; // true = this server also serves the built React app (one-service hosting)
+  clientDistDir: string; // absolute folder holding the built React app (client/dist)
 }
 
 export interface EnvResult {
@@ -120,10 +122,38 @@ export function parseEnv(source: Record<string, string | undefined>): EnvResult 
   const rawUploadDir = (source.UPLOAD_DIR ?? "").trim();
   const uploadDir = rawUploadDir ? path.resolve(rawUploadDir) : path.resolve(__dirname, "../../uploads/resumes");
 
+  // SERVE_CLIENT: when "true", this server also serves the built React app, so the browser
+  // talks to ONE address for both pages and API. Off by default: in development Vite serves
+  // the React app on its own port.
+  const rawServeClient = (source.SERVE_CLIENT ?? "false").trim().toLowerCase();
+  let serveClient = false;
+  if (rawServeClient === "true" || rawServeClient === "false") {
+    serveClient = rawServeClient === "true";
+  } else {
+    errors.push(`SERVE_CLIENT must be true or false (got "${rawServeClient}").`);
+  }
+
+  // CLIENT_DIST_DIR: where `npm run build` in client/ puts the finished app. The default works
+  // from both src/ (tsx) and dist/ (compiled), because both sit one level below server/.
+  const rawDistDir = (source.CLIENT_DIST_DIR ?? "").trim();
+  const clientDistDir = rawDistDir ? path.resolve(rawDistDir) : path.resolve(__dirname, "../../../client/dist");
+
   if (errors.length > 0) return { env: null, errors, warnings };
 
   return {
-    env: { nodeEnv, isProduction, port, databaseUrl, jwtSecret, clientOrigins, cookieSameSite, trustProxy, uploadDir },
+    env: {
+      nodeEnv,
+      isProduction,
+      port,
+      databaseUrl,
+      jwtSecret,
+      clientOrigins,
+      cookieSameSite,
+      trustProxy,
+      uploadDir,
+      serveClient,
+      clientDistDir,
+    },
     errors,
     warnings,
   };

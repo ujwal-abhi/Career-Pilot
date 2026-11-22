@@ -117,6 +117,9 @@ model Resume {
   fileName      String
   storedName    String
   fileSize      Int
+  // The PDF itself. A hosting platform's disk can disappear on a restart; the database does
+  // not. Null only for resumes uploaded before this column existed.
+  fileData      Bytes?
   extractedText String?
   isDefault     Boolean            @default(false)
   analyses      ResumeAnalysis[]

@@ -27,8 +27,10 @@ export async function listResumes(userId: string) {
   });
 }
 
+// Everything about a resume EXCEPT the PDF bytes (fileData), which can be several MB. Code that
+// only needs the text or the ownership check should not pay to load the file as well.
 export async function getResumeById(userId: string, id: string) {
-  const resume = await prisma.resume.findFirst({ where: { id, userId } });
+  const resume = await prisma.resume.findFirst({ where: { id, userId }, omit: { fileData: true } });
   if (!resume) {
     throw new Error("NOT_FOUND");
   }
@@ -36,10 +38,13 @@ export async function getResumeById(userId: string, id: string) {
 }
 
 export async function createResume(userId: string, file: UploadedFile) {
+  // Read the upload once. The same bytes are used for text extraction AND stored in the
+  // database, because a hosting platform's disk can disappear on a restart; the database does not.
+  const buffer = await fs.readFile(file.path);
+
   let extractedText: string | null = null;
 
   try {
-    const buffer = await fs.readFile(file.path);
     const parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
     extractedText = result.text;
@@ -57,11 +62,29 @@ export async function createResume(userId: string, file: UploadedFile) {
       fileName: file.originalname,
       storedName: file.filename,
       fileSize: file.size,
+      fileData: new Uint8Array(buffer), // a copy typed the way Prisma expects for a Bytes column
       extractedText,
       isDefault: existingCount === 0,
     },
     select: RESUME_SELECT,
   });
+}
+
+// The file for a download. `data` is the PDF from the database, or null for a resume uploaded
+// before PDFs were stored there (the caller then falls back to the file on disk).
+export async function getResumeFile(userId: string, id: string) {
+  const resume = await prisma.resume.findFirst({
+    where: { id, userId },
+    select: { fileName: true, storedName: true, fileData: true },
+  });
+  if (!resume) {
+    throw new Error("NOT_FOUND");
+  }
+  return {
+    fileName: resume.fileName,
+    storedName: resume.storedName,
+    data: resume.fileData ? Buffer.from(resume.fileData) : null,
+  };
 }
 
 export async function deleteResume(userId: string, id: string) {

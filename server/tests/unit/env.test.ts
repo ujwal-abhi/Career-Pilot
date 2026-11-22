@@ -19,6 +19,7 @@ describe("parseEnv", () => {
       clientOrigins: ["http://localhost:5173"],
       cookieSameSite: "lax",
       trustProxy: 0,
+      serveClient: false,
     });
   });
 
@@ -113,6 +114,37 @@ describe("parseEnv", () => {
     it("is always made absolute, so it does not depend on where the server was started", () => {
       const { env } = parseEnv({ ...base, UPLOAD_DIR: "some/relative/dir" });
       expect(path.isAbsolute(env!.uploadDir)).toBe(true);
+    });
+  });
+
+  describe("SERVE_CLIENT", () => {
+    it("is off by default, so development keeps using the Vite dev server", () => {
+      expect(parseEnv(base).env?.serveClient).toBe(false);
+    });
+
+    it("accepts true and false in any capitalisation", () => {
+      expect(parseEnv({ ...base, SERVE_CLIENT: "true" }).env?.serveClient).toBe(true);
+      expect(parseEnv({ ...base, SERVE_CLIENT: "TRUE" }).env?.serveClient).toBe(true);
+      expect(parseEnv({ ...base, SERVE_CLIENT: "false" }).env?.serveClient).toBe(false);
+    });
+
+    it("rejects anything else, instead of silently treating it as off", () => {
+      const result = parseEnv({ ...base, SERVE_CLIENT: "yes" });
+      expect(result.env).toBeNull();
+      expect(result.errors.some((message) => message.includes("SERVE_CLIENT"))).toBe(true);
+    });
+  });
+
+  describe("CLIENT_DIST_DIR", () => {
+    it("defaults to client/dist next to the server folder", () => {
+      const { env } = parseEnv(base);
+      expect(env?.clientDistDir.endsWith(path.join("client", "dist"))).toBe(true);
+      expect(path.isAbsolute(env!.clientDistDir)).toBe(true);
+    });
+
+    it("is always made absolute", () => {
+      const { env } = parseEnv({ ...base, CLIENT_DIST_DIR: "somewhere/dist" });
+      expect(path.isAbsolute(env!.clientDistDir)).toBe(true);
     });
   });
 

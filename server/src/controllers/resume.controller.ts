@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import {
   listResumes,
-  getResumeById,
   createResume,
   deleteResume,
   setDefaultResume,
+  getResumeFile,
   getResumeFilePath,
 } from "../services/resume.service";
 import { routeParam } from "../utils/params.util";
@@ -34,9 +34,22 @@ export async function postResume(req: Request, res: Response) {
 
 export async function downloadResume(req: Request, res: Response) {
   try {
-    const resume = await getResumeById(req.userId!, routeParam(req.params.id));
-    const filePath = getResumeFilePath(resume.storedName);
-    return res.download(filePath, resume.fileName);
+    const file = await getResumeFile(req.userId!, routeParam(req.params.id));
+
+    // 1. The normal case: the PDF is stored in the database. This still works after a
+    //    restart or redeploy wipes the server's disk.
+    if (file.data) {
+      res.attachment(file.fileName); // sets Content-Disposition (and strips any ../ from the name)
+      res.type("application/pdf");
+      return res.send(file.data);
+    }
+
+    // 2. A resume uploaded before PDFs were stored in the database: use the file on disk.
+    return res.download(getResumeFilePath(file.storedName), file.fileName, (error) => {
+      if (error && !res.headersSent) {
+        res.status(404).json({ success: false, message: "The file for this resume is no longer available." });
+      }
+    });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_FOUND") {
       return res.status(404).json({ success: false, message: "Resume not found." });

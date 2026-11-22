@@ -21,11 +21,14 @@ const upload = (file: Buffer, filename = "My Resume.pdf", contentType = "applica
 
 // supertest only buffers text and JSON by default; this reads a download as raw bytes.
 function binary(response: unknown, callback: (error: Error | null, body: Buffer) => void) {
-  const stream = response as NodeJS.ReadableStream; // supertest types this as a Response, but it is the raw stream
+  const stream = response as NodeJS.ReadableStream;
   const chunks: Buffer[] = [];
   stream.on("data", (chunk: Buffer) => chunks.push(chunk));
   stream.on("end", () => callback(null, Buffer.concat(chunks)));
 }
+
+const download = (id: string) =>
+  api().get(`/api/resumes/${id}/download`).set("Cookie", user.cookie).buffer(true).parse(binary);
 
 describe("POST /api/resumes", () => {
   it("accepts a real PDF, extracts its text, and makes the first resume the default", async () => {
@@ -38,10 +41,19 @@ describe("POST /api/resumes", () => {
     expect(stored.userId).toBe(user.id);
   });
 
+  // NEW
+  it("stores the PDF bytes in the database, so they survive a server restart", async () => {
+    const res = await upload(pdf, "in-database.pdf");
+    const stored = await prisma.resume.findUniqueOrThrow({ where: { id: res.body.data.resume.id } });
+    expect(stored.fileData).not.toBeNull();
+    expect(Buffer.compare(Buffer.from(stored.fileData!), pdf)).toBe(0);
+  });
+
   it("does not expose the stored file name or the extracted text in the response", async () => {
     const res = await upload(pdf, "another.pdf");
     expect(res.body.data.resume).not.toHaveProperty("storedName");
     expect(res.body.data.resume).not.toHaveProperty("extractedText");
+    expect(res.body.data.resume).not.toHaveProperty("fileData");
   });
 
   it("does not make later uploads the default", async () => {
@@ -112,24 +124,54 @@ describe("GET /api/resumes", () => {
 describe("GET /api/resumes/:id/download", () => {
   it("returns the exact bytes that were uploaded, as an attachment with the original name", async () => {
     const uploaded = await upload(pdf, "Download Me.pdf");
-    const res = await api()
-      .get(`/api/resumes/${uploaded.body.data.resume.id}/download`)
-      .set("Cookie", user.cookie)
-      .buffer(true)
-      .parse(binary);
+    const res = await download(uploaded.body.data.resume.id);
     expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/application\/pdf/);
     expect(res.headers["content-disposition"]).toMatch(/attachment/);
     expect(res.headers["content-disposition"]).toContain("Download Me.pdf");
     expect(Buffer.compare(res.body as Buffer, pdf)).toBe(0);
   });
 
+  // NEW: the situation on a free hosting plan after a restart wipes the disk.
+  it("still works after the file on disk is gone, because the database holds the PDF", async () => {
+    const uploaded = await upload(pdf, "survives-restart.pdf");
+    const id = uploaded.body.data.resume.id;
+    const { storedName } = await prisma.resume.findUniqueOrThrow({ where: { id } });
+    await fs.unlink(path.join(env.uploadDir, storedName));
+
+    const res = await download(id);
+    expect(res.status).toBe(200);
+    expect(Buffer.compare(res.body as Buffer, pdf)).toBe(0);
+  });
+
+  // NEW: resumes uploaded before this change have no bytes in the database, only a file on disk.
+  it("falls back to the file on disk for a resume that has no PDF in the database", async () => {
+    const uploaded = await upload(pdf, "old-style.pdf");
+    const id = uploaded.body.data.resume.id;
+    await prisma.resume.update({ where: { id }, data: { fileData: null } });
+
+    const res = await download(id);
+    expect(res.status).toBe(200);
+    expect(res.headers["content-disposition"]).toContain("old-style.pdf");
+    expect(Buffer.compare(res.body as Buffer, pdf)).toBe(0);
+  });
+
+  // NEW
+  it("answers 404 when the PDF is neither in the database nor on disk", async () => {
+    const uploaded = await upload(pdf, "lost.pdf");
+    const id = uploaded.body.data.resume.id;
+    const { storedName } = await prisma.resume.findUniqueOrThrow({ where: { id } });
+    await prisma.resume.update({ where: { id }, data: { fileData: null } });
+    await fs.unlink(path.join(env.uploadDir, storedName));
+
+    const res = await api().get(`/api/resumes/${id}/download`).set("Cookie", user.cookie);
+    expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
+  });
+
   it("cannot be used to climb out of the upload folder through the file name", async () => {
     const uploaded = await upload(pdf, "../../secret.pdf");
-    const res = await api()
-      .get(`/api/resumes/${uploaded.body.data.resume.id}/download`)
-      .set("Cookie", user.cookie)
-      .buffer(true)
-      .parse(binary);
+    const res = await download(uploaded.body.data.resume.id);
     expect(res.status).toBe(200);
     expect(res.headers["content-disposition"]).not.toMatch(/\.\.\//);
   });
